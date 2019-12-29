@@ -42,9 +42,9 @@ public class TCP_Receiver extends TCP_Receiver_ADT {
 			dataQueue.add(recvPack.getTcpS().getData());				
 			sequence++;
 		}else{
-			//System.out.println("Recieve Computed: "+CheckSum.computeChkSum(recvPack));
-			//System.out.println("Recieved Packet"+recvPack.getTcpH().getTh_sum());
-			//System.out.println("Problem: Packet Number: "+recvPack.getTcpH().getTh_seq()+" + InnerSeq:  "+sequence);
+			System.out.println("Recieve Computed: "+CheckSum.computeChkSum(recvPack));
+			System.out.println("Recieved Packet"+recvPack.getTcpH().getTh_sum());
+			System.out.println("Problem: Packet Number: "+recvPack.getTcpH().getTh_seq()+" + InnerSeq:  "+sequence);
 			tcpH.setTh_ack(-1);
 			ackPack = new TCP_PACKET(tcpH, tcpS, recvPack.getSourceAddr());
 			tcpH.setTh_sum(CheckSum.computeChkSum(ackPack));
