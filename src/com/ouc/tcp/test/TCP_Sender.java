@@ -15,7 +15,7 @@ import com.ouc.tcp.tool.TCP_TOOL;
 public class TCP_Sender extends TCP_Sender_ADT {
 	int sequence = 0;			//2.2版本，数据报序号
 	private TCP_PACKET tcpPack;	//待发送的TCP数据报
-	//private UDT_Timer timer;	//3.0版本，计时器
+	private UDT_Timer timer;	//3.0版本，计时器
 
 	/*构造函数*/
 	public TCP_Sender() {
@@ -39,11 +39,11 @@ public class TCP_Sender extends TCP_Sender_ADT {
 		udt_send(tcpPack);
 
 		//用于3.0版本：设置计时器和超时重传任务
-				/*timer = new UDT_Timer();
-				UDT_RetransTask reTrans = new UDT_RetransTask(client, tcpPack);
-				
-				//每隔3秒执行重传，直到收到ACK
-				timer.schedule(reTrans, 3000, 3000);*/
+		timer = new UDT_Timer();
+		UDT_RetransTask reTrans = new UDT_RetransTask(client, tcpPack);
+
+		//每隔3秒执行重传，直到收到ACK
+		timer.schedule(reTrans, 3000, 3000);
 		
 		//等待ACK报文
 		waitACK();
@@ -54,7 +54,7 @@ public class TCP_Sender extends TCP_Sender_ADT {
 	//不可靠发送：将打包好的TCP数据报通过不可靠传输信道发送；仅需修改错误标志
 	public void udt_send(TCP_PACKET stcpPack) {
 		//设置错误控制标志
-		tcpH.setTh_eflag((byte)1);
+		tcpH.setTh_eflag((byte)4);
 		//System.out.println("to send: "+stcpPack.getTcpH().getTh_seq());				
 		//发送数据报
 		client.send(stcpPack);
@@ -72,7 +72,7 @@ public class TCP_Sender extends TCP_Sender_ADT {
 				if  (currentAck == tcpPack.getTcpH().getTh_seq()){
 					System.out.println("Clear: "+tcpPack.getTcpH().getTh_seq());
 					//用于3.0：
-					//timer.cancel();
+					timer.cancel();
 					break;
 				}else{
 					System.out.println("Retransmit: "+tcpPack.getTcpH().getTh_seq());
