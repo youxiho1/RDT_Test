@@ -16,7 +16,7 @@ import com.ouc.tcp.tool.TCP_TOOL;
 public class TCP_Receiver extends TCP_Receiver_ADT {
 	
 	private TCP_PACKET ackPack;	//回复的ACK报文段
-	int sequence=1;//用于记录当前待接收的包序号，注意包序号不完全是
+	int sequence=1;				//2.1版本用于记录当前待接收的包序号，注意包序号不完全是
 	int count = 0;
 		
 	/*构造函数*/
@@ -28,9 +28,11 @@ public class TCP_Receiver extends TCP_Receiver_ADT {
 	@Override
 	//接收到数据报：检查校验和，设置回复的ACK报文段
 	public void rdt_recv(TCP_PACKET recvPack) {
-				
-		//检查校验码，生成ACK		
-		if(CheckSum.computeChkSum(recvPack) == recvPack.getTcpH().getTh_sum()) {
+		int seqInPack = recvPack.getTcpH().getTh_seq();
+		//2.0版本：检查校验码，生成ACK
+		//2.1版本，加入对seqInPack的判断（代替书中0和1两个状态）
+		if(CheckSum.computeChkSum(recvPack) == recvPack.getTcpH().getTh_sum() && seqInPack == sequence) {
+			//是我期望的序号 && 校验通过
 			//生成ACK报文段（设置确认号）
 			tcpH.setTh_ack(recvPack.getTcpH().getTh_seq());
 			ackPack = new TCP_PACKET(tcpH, tcpS, recvPack.getSourceAddr());
@@ -40,12 +42,22 @@ public class TCP_Receiver extends TCP_Receiver_ADT {
 			
 			//将接收到的正确有序的数据插入data队列，准备交付
 			dataQueue.add(recvPack.getTcpS().getData());				
-			sequence++;
-		}else{
+			//sequence++;
+			//2.1版本，调整sequence增长方式
+			sequence = sequence + recvPack.getTcpS().getData().length;
+		}else if(seqInPack == sequence){
 			System.out.println("Recieve Computed: "+CheckSum.computeChkSum(recvPack));
 			System.out.println("Recieved Packet"+recvPack.getTcpH().getTh_sum());
 			System.out.println("Problem: Packet Number: "+recvPack.getTcpH().getTh_seq()+" + InnerSeq:  "+sequence);
 			tcpH.setTh_ack(-1);
+			ackPack = new TCP_PACKET(tcpH, tcpS, recvPack.getSourceAddr());
+			tcpH.setTh_sum(CheckSum.computeChkSum(ackPack));
+			//回复ACK报文段
+			reply(ackPack);
+		} else {
+			//System.out.println("重复");
+			//seqInPack != sequence，说明该数据报我已经接收过了
+			tcpH.setTh_ack(recvPack.getTcpH().getTh_seq());
 			ackPack = new TCP_PACKET(tcpH, tcpS, recvPack.getSourceAddr());
 			tcpH.setTh_sum(CheckSum.computeChkSum(ackPack));
 			//回复ACK报文段
@@ -107,7 +119,7 @@ public class TCP_Receiver extends TCP_Receiver_ADT {
 	//回复ACK报文段,不需要修改
 	public void reply(TCP_PACKET replyPack) {
 		//设置错误控制标志
-		tcpH.setTh_eflag((byte)0);	//eFlag=0，信道无错误
+		tcpH.setTh_eflag((byte)1);	//eFlag=0，信道无错误
 				
 		//发送数据报
 		client.send(replyPack);

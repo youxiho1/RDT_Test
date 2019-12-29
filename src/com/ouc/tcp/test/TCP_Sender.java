@@ -13,9 +13,10 @@ import com.ouc.tcp.message.*;
 import com.ouc.tcp.tool.TCP_TOOL;
 
 public class TCP_Sender extends TCP_Sender_ADT {
-	
+	int sequence = 0;			//2.2版本，数据报序号
 	private TCP_PACKET tcpPack;	//待发送的TCP数据报
-		
+	//private UDT_Timer timer;	//3.0版本，计时器
+
 	/*构造函数*/
 	public TCP_Sender() {
 		super();	//调用超类构造函数
@@ -36,7 +37,10 @@ public class TCP_Sender extends TCP_Sender_ADT {
 
 		//发送TCP数据报
 		udt_send(tcpPack);
-		
+
+		//2.2版本，发送完成之后更新sequence的值
+		sequence = tcpPack.getTcpH().getTh_seq();
+
 		//用于3.0版本：设置计时器和超时重传任务
 				/*timer = new UDT_Timer();
 				UDT_RetransTask reTrans = new UDT_RetransTask(client, tcpPack);
@@ -89,6 +93,12 @@ public class TCP_Sender extends TCP_Sender_ADT {
 			udt_send(tcpPack);
 			return;
 		}
+		if(CheckSum.computeChkSum(recvPack) != recvPack.getTcpH().getTh_sum()) {		//2.1版本检测corrupt
+			System.out.println("corrupt");
+			udt_send(tcpPack);
+			return;
+		}
+
 		System.out.println("Receive ACK Number： "+ recvPack.getTcpH().getTh_ack());
 		ackQueue.add(recvPack.getTcpH().getTh_ack());
 		System.out.println();
