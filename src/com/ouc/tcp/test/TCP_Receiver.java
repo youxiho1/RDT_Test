@@ -35,32 +35,45 @@ public class TCP_Receiver extends TCP_Receiver_ADT {
 			//是我期望的序号 && 校验通过
 			//生成ACK报文段（设置确认号）
 			tcpH.setTh_ack(recvPack.getTcpH().getTh_seq());
+			tcpH.setTh_seq(sequence);
 			ackPack = new TCP_PACKET(tcpH, tcpS, recvPack.getSourceAddr());
 			tcpH.setTh_sum(CheckSum.computeChkSum(ackPack));
 			//回复ACK报文段
-			reply(ackPack);			
-			
+			reply(ackPack);
+			System.out.println("ack包序号为" + ackPack.getTcpH().getTh_seq());
 			//将接收到的正确有序的数据插入data队列，准备交付
 			dataQueue.add(recvPack.getTcpS().getData());				
 			//sequence++;
 			//2.1版本，调整sequence增长方式
 			sequence = sequence + recvPack.getTcpS().getData().length;
 		}else if(seqInPack == sequence){
+			//2.0版本 NAK
+//			System.out.println("Recieve Computed: "+CheckSum.computeChkSum(recvPack));
+//			System.out.println("Recieved Packet"+recvPack.getTcpH().getTh_sum());
+//			System.out.println("Problem: Packet Number: "+recvPack.getTcpH().getTh_seq()+" + InnerSeq:  "+sequence);
+//			tcpH.setTh_ack(-1);
+//			ackPack = new TCP_PACKET(tcpH, tcpS, recvPack.getSourceAddr());
+//			tcpH.setTh_sum(CheckSum.computeChkSum(ackPack));
+
+			//2.2版本 无NAK，改用序号不足的ack来充当NAK
 			System.out.println("Recieve Computed: "+CheckSum.computeChkSum(recvPack));
 			System.out.println("Recieved Packet"+recvPack.getTcpH().getTh_sum());
 			System.out.println("Problem: Packet Number: "+recvPack.getTcpH().getTh_seq()+" + InnerSeq:  "+sequence);
-			tcpH.setTh_ack(-1);
-			ackPack = new TCP_PACKET(tcpH, tcpS, recvPack.getSourceAddr());
-			tcpH.setTh_sum(CheckSum.computeChkSum(ackPack));
+			//tcpH.setTh_ack(recvPack.getTcpH().getTh_seq());
+
+			//ackPack = new TCP_PACKET(tcpH, tcpS, recvPack.getSourceAddr());
+			//tcpH.setTh_sum(CheckSum.computeChkSum(ackPack));
 			//回复ACK报文段
+			System.out.println("ack包序号为" + ackPack.getTcpH().getTh_seq());
 			reply(ackPack);
 		} else {
-			//System.out.println("重复");
+			System.out.println("重复");
 			//seqInPack != sequence，说明该数据报我已经接收过了
 			tcpH.setTh_ack(recvPack.getTcpH().getTh_seq());
 			ackPack = new TCP_PACKET(tcpH, tcpS, recvPack.getSourceAddr());
 			tcpH.setTh_sum(CheckSum.computeChkSum(ackPack));
 			//回复ACK报文段
+			System.out.println("ack包序号为" + ackPack.getTcpH().getTh_seq());
 			reply(ackPack);
 		}
 		
@@ -124,7 +137,6 @@ public class TCP_Receiver extends TCP_Receiver_ADT {
 		//发送数据报
 		client.send(replyPack);
 	}
-	
-	
-	
+
+
 }
