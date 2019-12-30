@@ -16,6 +16,7 @@ public class TCP_Sender extends TCP_Sender_ADT {
 	int sequence = 0;			//2.2版本，数据报序号
 	private TCP_PACKET tcpPack;	//待发送的TCP数据报
 	private UDT_Timer timer;	//3.0版本，计时器
+	private SR_SendWindow window = new SR_SendWindow(client);
 
 	/*构造函数*/
 	public TCP_Sender() {
@@ -34,19 +35,26 @@ public class TCP_Sender extends TCP_Sender_ADT {
 		tcpPack = new TCP_PACKET(tcpH, tcpS, destinAddr);
 		tcpH.setTh_sum(CheckSum.computeChkSum(tcpPack));
 		tcpPack.setTcpH(tcpH);
-
-		//发送TCP数据报
-		udt_send(tcpPack);
-
-		//用于3.0版本：设置计时器和超时重传任务
-		timer = new UDT_Timer();
-		UDT_RetransTask reTrans = new UDT_RetransTask(client, tcpPack);
-
-		//每隔3秒执行重传，直到收到ACK
-		timer.schedule(reTrans, 3000, 3000);
-		
-		//等待ACK报文
-		waitACK();
+		System.out.println("here");
+		while(window.isFull());
+		TCP_PACKET packet = new TCP_PACKET(tcpH, tcpS, destinAddr);
+		try {
+			window.sendPacket(packet.clone());
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+//		//发送TCP数据报
+//		udt_send(tcpPack);
+//
+//		//用于3.0版本：设置计时器和超时重传任务
+//		timer = new UDT_Timer();
+//		UDT_RetransTask reTrans = new UDT_RetransTask(client, tcpPack);
+//
+//		//每隔3秒执行重传，直到收到ACK
+//		timer.schedule(reTrans, 3000, 3000);
+//
+//		//等待ACK报文
+//		waitACK();
 		
 	}
 	
@@ -92,21 +100,25 @@ public class TCP_Sender extends TCP_Sender_ADT {
 //		}
 		if(CheckSum.computeChkSum(recvPack) != recvPack.getTcpH().getTh_sum()) {		//2.1版本检测corrupt
 			System.out.println("corrupt");
-			udt_send(tcpPack);
-			return;
-		}
-		if(recvPack.getTcpH().getTh_seq() < sequence) {									//2.2版本，无NAK
-			System.out.println("ack报文编号" + recvPack.getTcpH().getTh_seq() + "已重复收到");
-			System.out.println("想要的报文编号是" + sequence);
-			//该ack报文我已经收到过了
-			udt_send(tcpPack);
+			//udt_send(tcpPack);														//GBN版本 corrupt不需处理
 			return;
 		}
 
+		//GBN版本无需在sender对序号进行判断
+//		if(recvPack.getTcpH().getTh_seq() < sequence) {									//2.2版本，无NAK
+//			System.out.println("ack报文编号" + recvPack.getTcpH().getTh_seq() + "已重复收到");
+//			System.out.println("想要的报文编号是" + sequence);
+//			//该ack报文我已经收到过了
+//			udt_send(tcpPack);
+//			return;
+//		}
+
 		//2.2版本，发送完成之后更新sequence的值
-		System.out.print("sequence: " + sequence + "-> ");
-		sequence = tcpPack.getTcpH().getTh_seq();
-		System.out.println(sequence);
+		//GBN版本无需再进行该判断
+//		System.out.print("sequence: " + sequence + "-> ");
+//		sequence = tcpPack.getTcpH().getTh_seq();
+//		System.out.println(sequence);
+		window.recvPacket(recvPack);								//使用窗口来处理ack
 		System.out.println("Receive ACK Number： "+ recvPack.getTcpH().getTh_ack());
 		ackQueue.add(recvPack.getTcpH().getTh_ack());
 		System.out.println();

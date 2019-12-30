@@ -18,6 +18,7 @@ public class TCP_Receiver extends TCP_Receiver_ADT {
 	private TCP_PACKET ackPack;	//回复的ACK报文段
 	int sequence=1;				//2.1版本用于记录当前待接收的包序号，注意包序号不完全是
 	int count = 0;
+	private SR_ReceiveWindow window = new SR_ReceiveWindow(client);
 		
 	/*构造函数*/
 	public TCP_Receiver() {
@@ -31,7 +32,8 @@ public class TCP_Receiver extends TCP_Receiver_ADT {
 		int seqInPack = recvPack.getTcpH().getTh_seq();
 		//2.0版本：检查校验码，生成ACK
 		//2.1版本，加入对seqInPack的判断（代替书中0和1两个状态）
-		if(CheckSum.computeChkSum(recvPack) == recvPack.getTcpH().getTh_sum() && seqInPack == sequence) {
+		//if(CheckSum.computeChkSum(recvPack) == recvPack.getTcpH().getTh_sum() && seqInPack == sequence) {
+		if(CheckSum.computeChkSum(recvPack) == recvPack.getTcpH().getTh_sum()) {
 			//是我期望的序号 && 校验通过
 			//生成ACK报文段（设置确认号）
 			tcpH.setTh_ack(recvPack.getTcpH().getTh_seq());
@@ -42,44 +44,62 @@ public class TCP_Receiver extends TCP_Receiver_ADT {
 			reply(ackPack);
 			System.out.println("ack包序号为" + ackPack.getTcpH().getTh_seq());
 			//将接收到的正确有序的数据插入data队列，准备交付
-			dataQueue.add(recvPack.getTcpS().getData());				
+			dataQueue.add(recvPack.getTcpS().getData());
 			//sequence++;
 			//2.1版本，调整sequence增长方式
 			sequence = sequence + recvPack.getTcpS().getData().length;
-		}else if(seqInPack == sequence){
-			//2.0版本 NAK
+		}
+//		else if(seqInPack == sequence){
+//			//2.0版本 NAK
+////			System.out.println("Recieve Computed: "+CheckSum.computeChkSum(recvPack));
+////			System.out.println("Recieved Packet"+recvPack.getTcpH().getTh_sum());
+////			System.out.println("Problem: Packet Number: "+recvPack.getTcpH().getTh_seq()+" + InnerSeq:  "+sequence);
+////			tcpH.setTh_ack(-1);
+////			ackPack = new TCP_PACKET(tcpH, tcpS, recvPack.getSourceAddr());
+////			tcpH.setTh_sum(CheckSum.computeChkSum(ackPack));
+//
+//			//2.2版本 无NAK，改用序号不足的ack来充当NAK
 //			System.out.println("Recieve Computed: "+CheckSum.computeChkSum(recvPack));
 //			System.out.println("Recieved Packet"+recvPack.getTcpH().getTh_sum());
 //			System.out.println("Problem: Packet Number: "+recvPack.getTcpH().getTh_seq()+" + InnerSeq:  "+sequence);
-//			tcpH.setTh_ack(-1);
+//			//tcpH.setTh_ack(recvPack.getTcpH().getTh_seq());
+//
+//			//ackPack = new TCP_PACKET(tcpH, tcpS, recvPack.getSourceAddr());
+//			//tcpH.setTh_sum(CheckSum.computeChkSum(ackPack));
+//			//回复ACK报文段
+//			System.out.println("ack包序号为" + ackPack.getTcpH().getTh_seq());
+//			reply(ackPack);
+//		} else {
+//			System.out.println("重复");
+//			//seqInPack != sequence，说明该数据报我已经接收过了
+//			tcpH.setTh_ack(recvPack.getTcpH().getTh_seq());
 //			ackPack = new TCP_PACKET(tcpH, tcpS, recvPack.getSourceAddr());
 //			tcpH.setTh_sum(CheckSum.computeChkSum(ackPack));
-
-			//2.2版本 无NAK，改用序号不足的ack来充当NAK
-			System.out.println("Recieve Computed: "+CheckSum.computeChkSum(recvPack));
-			System.out.println("Recieved Packet"+recvPack.getTcpH().getTh_sum());
-			System.out.println("Problem: Packet Number: "+recvPack.getTcpH().getTh_seq()+" + InnerSeq:  "+sequence);
-			//tcpH.setTh_ack(recvPack.getTcpH().getTh_seq());
-
-			//ackPack = new TCP_PACKET(tcpH, tcpS, recvPack.getSourceAddr());
-			//tcpH.setTh_sum(CheckSum.computeChkSum(ackPack));
-			//回复ACK报文段
-			System.out.println("ack包序号为" + ackPack.getTcpH().getTh_seq());
-			reply(ackPack);
-		} else {
-			System.out.println("重复");
-			//seqInPack != sequence，说明该数据报我已经接收过了
-			tcpH.setTh_ack(recvPack.getTcpH().getTh_seq());
+//			//回复ACK报文段
+//			System.out.println("ack包序号为" + ackPack.getTcpH().getTh_seq());
+//			reply(ackPack);
+//		}
+		else if(seqInPack < sequence) {
+			//收到了一个序号小于我的包
+			System.out.println("拒收该包");
+			tcpH.setTh_ack(seqInPack);
 			ackPack = new TCP_PACKET(tcpH, tcpS, recvPack.getSourceAddr());
 			tcpH.setTh_sum(CheckSum.computeChkSum(ackPack));
 			//回复ACK报文段
-			System.out.println("ack包序号为" + ackPack.getTcpH().getTh_seq());
+			reply(ackPack);
+			//System.out.println("ack包序号为" + ackPack.getTcpH().getTh_seq());
+			//将接收到的正确有序的数据插入data队列，准备交付
+			//dataQueue.add(recvPack.getTcpS().getData());
+		}
+		else {
+			//GBN版本
 			reply(ackPack);
 		}
+
 		
 		
 		//交付数据（每20组数据交付一次）
-		if(dataQueue.size() == 20) 
+		if(dataQueue.size() >= 20)			//SR版本修改交付情况为>=
 			deliver_data();	
 	}
 
