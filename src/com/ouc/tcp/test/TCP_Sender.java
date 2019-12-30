@@ -29,13 +29,14 @@ public class TCP_Sender extends TCP_Sender_ADT {
 	public void rdt_send(int dataIndex, int[] appData) {
 				
 		//生成TCP数据报（设置序号和数据字段/校验和),注意打包的顺序
-		tcpH.setTh_seq(dataIndex * appData.length + 1);//包序号设置为字节流号：
+		tcpH = new TCP_HEADER();
+		tcpS = new TCP_SEGMENT();
+		tcpH.setTh_seq(dataIndex);//包序号设置为字节流号：
 		tcpS.setData(appData);
 		tcpH.setTh_sum((short)0);						//需要初始化校验和以进行计算
 		tcpPack = new TCP_PACKET(tcpH, tcpS, destinAddr);
 		tcpH.setTh_sum(CheckSum.computeChkSum(tcpPack));
 		tcpPack.setTcpH(tcpH);
-		System.out.println("here");
 		while(window.isFull());
 		TCP_PACKET packet = new TCP_PACKET(tcpH, tcpS, destinAddr);
 		try {

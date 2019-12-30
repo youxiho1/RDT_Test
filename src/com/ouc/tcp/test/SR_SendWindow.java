@@ -31,10 +31,10 @@ public class SR_SendWindow extends Window{
     }
 
     public void recvPacket(TCP_PACKET packet) {
-        int ack = packet.getTcpH().getTh_ack();             //ack相当于是序号
-        System.out.println("ackkkk=" + ack);
-        if(ack / 100 >= base && ack / 100 <= base + size) {
-            int index = ack / 100 % size;
+        int ack = packet.getTcpH().getTh_ack();             //ack相当于是序号*100+1
+        System.out.println("接收到了ack包，ack号为" + ack);
+        if(ack >= base && ack <= base + size) {
+            int index = ack % size;
             if(timers[index] != null)
                 timers[index].cancel();
             isAck[index] = true;
@@ -42,7 +42,7 @@ public class SR_SendWindow extends Window{
             System.out.print(" base = " + base);
             System.out.print(" nextseqnum = " + nextseqnum);
             System.out.println(" end = " + end);
-            if(ack / 100 == base) {
+            if(ack == base) {
                 //收到的包是窗口的第一个包，将窗口下沿向前推到一个unAckd seq#
                 int i;
                 for(i = base; i <= nextseqnum && isAck[i % size]; i++) {
@@ -56,7 +56,6 @@ public class SR_SendWindow extends Window{
                 base = Math.min(i, nextseqnum);
                 System.out.println("base2 = " + base);
                 end = base + size - 1;
-                sequence = base * 100 + 1;
             }
         }
     }

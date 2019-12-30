@@ -13,17 +13,24 @@ public class SR_ReceiveWindow extends Window {
 
     public Vector<TCP_PACKET> recvPacket(TCP_PACKET packet) {
         Vector<TCP_PACKET> vector = new Vector<>();
-        int index = packet.getTcpH().getTh_ack() / 100;
+        int seq = packet.getTcpH().getTh_seq();
+        int index = seq % size;
+        System.out.println("ReceiveWindow信息如下：");
+        System.out.print("seq = " + seq);
+        System.out.print("index = " + index);
+        System.out.print(" base = " + base);
+        System.out.print(" nextseqnum = " + nextseqnum);
+        System.out.println(" end = " + end);
         if(index >= 0) {
-            index = index % size;
             isAck[index] = true;
             packets[index] = packet;
-            client.send(packet);
-            if(index == base % size) {          //收到的包是窗口的第一个包
+//            client.send(packet);
+            if(seq == base) {          //收到的包是窗口的第一个包
                 int i;
                 for(i = base; i <= end && isAck[i % size]; i++) {
                     vector.addElement(packets[i % size]);
                     isAck[i % size] = false;
+                    packets[i % size] = null;
                 }
                 base = i;               //移动窗口位置
                 end = base + size - 1;
