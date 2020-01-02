@@ -48,28 +48,31 @@ public class Taho_SendWindow extends SR_SendWindow{
     public void recvPacket(TCP_PACKET packet) {
         int ack = packet.getTcpH().getTh_ack();
         System.out.println("\nTaho_SenderWindow\n接收到了ack包，ack号为" + ack);
-//        if(ack > base) {
-//            wrongAckNum++;
-//            if(wrongAckNum > 3) {
-//                wrongAckNum = 0;
-//                ssthresh = size / 2;
-//                size = 1;
-//                System.out.println("执行快速重传，窗口大小已置为1");
-//                if(timers[ack] != null) {
-//                    timers[ack].cancel();
-//                    timers[ack] = new UDT_Timer();
-//                    try {
-//                        Taho_RetransmitTask task = new Taho_RetransmitTask(client, packet.clone());
-//                        timers[ack].schedule(task, 3000, 3000);
-//                    } catch (CloneNotSupportedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//                client.send(packet);
-//            }
-//        }
-//        else
-        if (ack >= base) {
+        if(ack > base) {
+            wrongAckNum++;
+            if(wrongAckNum > 3) {
+                wrongAckNum = 0;
+                ssthresh = size / 2;
+                size = 1;
+                System.out.println("执行快速重传，窗口大小已置为1");
+                if(timers[base] != null) {
+                    timers[base].cancel();
+                    timers[base] = new UDT_Timer();
+                    try {
+                        Taho_RetransmitTask task = new Taho_RetransmitTask(client, packets[base].clone());
+                        timers[base].schedule(task, 3000, 3000);
+                    } catch (CloneNotSupportedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                try {
+                    client.send(packets[base].clone());
+                } catch (CloneNotSupportedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        else if (ack >= base) {
             System.out.print("size： " + size);
             if (size < ssthresh) {
                 if(size * 2 <= 0) {
@@ -90,8 +93,11 @@ public class Taho_SendWindow extends SR_SendWindow{
         }
         if(ack >= base) {
             int index = ack;
-            if(timers[index] != null)
+            if(timers[index] != null) {
                 timers[index].cancel();
+                timers[index] = null;
+            }
+
             isAck[index] = true;
             if(ack == base) {
                 //收到的包是窗口的第一个包，将窗口下沿向前推到一个unAckd seq#
