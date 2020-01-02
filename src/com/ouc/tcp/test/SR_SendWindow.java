@@ -8,7 +8,7 @@ import com.ouc.tcp.message.TCP_PACKET;
 import java.util.TimerTask;
 
 public class SR_SendWindow extends Window{
-    private UDT_Timer[] timers = new UDT_Timer[size];
+    public UDT_Timer[] timers = new UDT_Timer[size];
 
     public SR_SendWindow(Client client) {
         super(client);
@@ -21,7 +21,13 @@ public class SR_SendWindow extends Window{
         packets[index] = packet;
         isAck[index] = false;
         timers[index] = new UDT_Timer();
-        UDT_RetransTask task = new UDT_RetransTask(client, packet);
+//        UDT_RetransTask task = new UDT_RetransTask(client, packet);
+        RetransmitTask task = null;
+        try {
+            task = new RetransmitTask(client, packet.clone());
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
         timers[index].schedule(task, 3000, 3000);
 
         nextseqnum++;
@@ -32,7 +38,7 @@ public class SR_SendWindow extends Window{
 
     public void recvPacket(TCP_PACKET packet) {
         int ack = packet.getTcpH().getTh_ack();             //ack相当于是序号*100+1
-        System.out.println("接收到了ack包，ack号为" + ack);
+        //System.out.println("接收到了ack包，ack号为" + ack);
         if(ack >= base && ack <= base + size) {
             int index = ack % size;
             if(timers[index] != null)
@@ -60,29 +66,16 @@ public class SR_SendWindow extends Window{
         }
     }
 
-    class RetransmitTask extends TimerTask {
+    class RetransmitTask extends UDT_RetransTask {
 
-        public RetransmitTask() {
-            super();
+        public RetransmitTask(Client client, TCP_PACKET packet) {
+            super(client, packet);
         }
 
         @Override
         public void run() {
             //执行重传
-            for (int i = base; i < nextseqnum; i++) {
-                int index = i % size;
-                if(packets[index]!=null && !isAck[index]) {
-                    try {
-                        timers[index].cancel();
-						timers[index] = new UDT_Timer();
-						RetransmitTask task = new RetransmitTask();
-						timers[index].schedule(task, 3000, 3000);
-                        client.send(packets[index].clone());
-                    } catch (CloneNotSupportedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+            super.run();
         }
     }
 

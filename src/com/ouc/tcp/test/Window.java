@@ -7,7 +7,7 @@ import java.util.TimerTask;
 
 public class Window  {
     public Client client;
-    public int size = 15;
+    public int size = 500000;
     public TCP_PACKET[] packets = new TCP_PACKET[size];
     public volatile int base = 0;
     public volatile int nextseqnum = 0;
@@ -20,6 +20,6 @@ public class Window  {
     }
 
     public boolean isFull() {
-        return nextseqnum == end;
+        return nextseqnum >= end;
     }
 }
