@@ -17,7 +17,7 @@ public class TCP_Sender extends TCP_Sender_ADT {
 	private TCP_PACKET tcpPack;	//待发送的TCP数据报
 	private UDT_Timer timer;	//3.0版本，计时器
 //	private SR_SendWindow window = new SR_SendWindow(client);
-	private Taho_SendWindow window = new Taho_SendWindow(client);
+	private Reno_SendWindow window = new Reno_SendWindow(client);
 
 	/*构造函数*/
 	public TCP_Sender() {

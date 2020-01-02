@@ -3,10 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="45562d3f-351e-4d3e-b70c-132fd057bcab" name="Default Changelist" comment="">
       <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/com/ouc/tcp/test/Reno_SendWindow.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/com/ouc/tcp/test/SR_ReceiveWindow.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/com/ouc/tcp/test/SR_SendWindow.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/com/ouc/tcp/test/Taho_ReceiveWindow.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/com/ouc/tcp/test/Taho_SendWindow.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/com/ouc/tcp/test/Window.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Log.txt" afterDir="false" />
@@ -32,22 +32,10 @@
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/com/ouc/tcp/test/Taho_SendWindow.java">
+        <entry file="file://$PROJECT_DIR$/src/com/ouc/tcp/test/Reno_SendWindow.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="155">
-              <caret line="66" column="17" lean-forward="true" selection-start-line="66" selection-start-column="17" selection-end-line="66" selection-end-column="17" />
-              <folding>
-                <element signature="imports" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/com/ouc/tcp/test/SR_SendWindow.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="13">
-              <caret line="67" selection-start-line="67" selection-end-line="67" />
+            <state relative-caret-position="4375">
+              <caret line="175" column="51" lean-forward="true" selection-start-line="175" selection-start-column="51" selection-end-line="175" selection-end-column="51" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -70,8 +58,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/com/ouc/tcp/test/TCP_Sender.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-962">
-              <caret line="20" selection-start-line="20" selection-end-line="20" />
+            <state relative-caret-position="156">
+              <caret line="18" column="49" selection-start-line="18" selection-start-column="49" selection-end-line="18" selection-end-column="49" />
               <folding>
                 <element signature="n#!!doc" expanded="true" />
                 <element signature="imports" expanded="true" />
@@ -118,10 +106,12 @@
       <find>corrupt</find>
       <find>ReceiveWindow</find>
       <find>正常接收</find>
-      <find>size</find>
       <find>System.out.print</find>
       <find>Integer.MAX_VALUE</find>
       <find>快速</find>
+      <find>快速恢复</find>
+      <find>size</find>
+      <find>524</find>
     </findStrings>
     <replaceStrings>
       <replace>size</replace>
@@ -143,14 +133,14 @@
         <option value="$PROJECT_DIR$/src/com/ouc/tcp/test/SR_ReceiveWindow.java" />
         <option value="$PROJECT_DIR$/src/com/ouc/tcp/test/Taho_ReceiveWindow.java" />
         <option value="$PROJECT_DIR$/src/com/ouc/tcp/test/SR_SendWindow.java" />
-        <option value="$PROJECT_DIR$/src/com/ouc/tcp/test/TCP_Sender.java" />
         <option value="$PROJECT_DIR$/src/com/ouc/tcp/test/TCP_Receiver.java" />
         <option value="$PROJECT_DIR$/src/com/ouc/tcp/test/Window.java" />
         <option value="$PROJECT_DIR$/src/com/ouc/tcp/test/Taho_SendWindow.java" />
+        <option value="$PROJECT_DIR$/src/com/ouc/tcp/test/TCP_Sender.java" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="7">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="61" />
     <option name="y" value="291" />
     <option name="width" value="1307" />
@@ -248,10 +238,11 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="95437000" />
+    <option name="totallyTimeSpent" value="102320000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1382" height="744" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.24281392" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -475,12 +466,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/com/ouc/tcp/test/TCP_Sender.java">
+    <entry file="file://$PROJECT_DIR$/src/com/ouc/tcp/test/Window.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-962">
-          <caret line="20" selection-start-line="20" selection-end-line="20" />
+        <state relative-caret-position="215">
+          <caret line="22" column="27" selection-start-line="22" selection-start-column="27" selection-end-line="22" selection-end-column="27" />
           <folding>
-            <element signature="n#!!doc" expanded="true" />
             <element signature="imports" expanded="true" />
           </folding>
         </state>
@@ -496,20 +486,21 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/com/ouc/tcp/test/Window.java">
+    <entry file="file://$PROJECT_DIR$/src/com/ouc/tcp/test/TCP_Sender.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="215">
-          <caret line="22" column="27" selection-start-line="22" selection-start-column="27" selection-end-line="22" selection-end-column="27" />
+        <state relative-caret-position="156">
+          <caret line="18" column="49" selection-start-line="18" selection-start-column="49" selection-end-line="18" selection-end-column="49" />
           <folding>
+            <element signature="n#!!doc" expanded="true" />
             <element signature="imports" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/com/ouc/tcp/test/Taho_SendWindow.java">
+    <entry file="file://$PROJECT_DIR$/src/com/ouc/tcp/test/Reno_SendWindow.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="155">
-          <caret line="66" column="17" lean-forward="true" selection-start-line="66" selection-start-column="17" selection-end-line="66" selection-end-column="17" />
+        <state relative-caret-position="4375">
+          <caret line="175" column="51" lean-forward="true" selection-start-line="175" selection-start-column="51" selection-end-line="175" selection-end-column="51" />
           <folding>
             <element signature="imports" expanded="true" />
           </folding>
