@@ -48,21 +48,42 @@ public class Taho_SendWindow extends SR_SendWindow{
     public void recvPacket(TCP_PACKET packet) {
         int ack = packet.getTcpH().getTh_ack();
         System.out.println("\nTaho_SenderWindow\n接收到了ack包，ack号为" + ack);
+//        if(ack > base) {
+//            wrongAckNum++;
+//            if(wrongAckNum > 3) {
+//                wrongAckNum = 0;
+//                ssthresh = size / 2;
+//                size = 1;
+//                System.out.println("执行快速重传，窗口大小已置为1");
+//                if(timers[ack] != null) {
+//                    timers[ack].cancel();
+//                    timers[ack] = new UDT_Timer();
+//                    try {
+//                        Taho_RetransmitTask task = new Taho_RetransmitTask(client, packet.clone());
+//                        timers[ack].schedule(task, 3000, 3000);
+//                    } catch (CloneNotSupportedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//                client.send(packet);
+//            }
+//        }
+//        else
         if (ack >= base) {
             System.out.print("size： " + size);
             if (size < ssthresh) {
                 if(size * 2 <= 0) {
                     //处理整型溢出现象
-                    size = Integer.MAX_VALUE;
+                    size = Integer.MAX_VALUE/2;
                 } else {
-                    size = Math.min(Integer.MAX_VALUE, size * 2);
+                    size = Math.min(Integer.MAX_VALUE/2, size * 2);
                 }
             } else {
                 if(size + 1 <= 0) {
                     //处理整型溢出现象
-                    size = Integer.MAX_VALUE;
+                    size = Integer.MAX_VALUE/2;
                 } else {
-                    size = Math.min(Integer.MAX_VALUE, size + 1);
+                    size = Math.min(Integer.MAX_VALUE/2, size + 1);
                 }
             }
             System.out.println(" --> " + size);
