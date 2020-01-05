@@ -5,14 +5,19 @@ import com.ouc.tcp.client.UDT_RetransTask;
 import com.ouc.tcp.client.UDT_Timer;
 import com.ouc.tcp.message.TCP_PACKET;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.TimerTask;
 
 public class Reno_SendWindow extends SR_SendWindow{
     private int ssthresh;
-    private int wrongAckNum;
+    private int wrongAckNum = 0;
     private int status;         //status=0代表慢启动，status=1代表拥塞避免, status=2代表快速恢复
     private int tempAdd = 1;
+    private int count = 0;
     private HashMap<Integer, Integer> hashMap = new HashMap<>();
 
     public Reno_SendWindow(Client client) {
@@ -48,78 +53,63 @@ public class Reno_SendWindow extends SR_SendWindow{
 
     @Override
     public void recvPacket(TCP_PACKET packet) {
+        System.out.println("size : " + size);
         int ack = packet.getTcpH().getTh_ack();
-        System.out.println("\nTaho_SenderWindow\n接收到了ack包，ack号为" + ack);
-        boolean flag = false;                       //这是一个延迟标志，如果函数结束时标志为true，则切换状态
-        if(status == 2 && isAck[ack]) {
-            //快速恢复状态，一个重复的ACK到达
-            if(size + tempAdd <= 0) {
-                size = Integer.MAX_VALUE/2;
-            } else {
-                size = Math.min(size+tempAdd, Integer.MAX_VALUE/2);
+        System.out.println("\nReno_SenderWindow\n接收到了ack包，ack号为" + ack);
+
+        if(status == 0) {
+            size++;
+            if(size >= ssthresh) {
+                status = 1;
             }
-            if(tempAdd * 2 <= 0) {
-                //处理整型溢出问题
-                tempAdd = Integer.MAX_VALUE/2;
-            } else {
-                tempAdd = tempAdd * 2;
+        } else if(status == 1) {
+            count++;
+            if(count >= size) {
+                count = 0;
+                size++;
             }
-            System.out.println("快速恢复状态，一个重复的ACK到达");
-        }  else if(status == 2 && !isAck[ack]) {
-            //快速恢复状态，一个新的ACK到达
-            size = ssthresh;
-            flag = true;
-            System.out.println("快速恢复状态，一个新的ACK到达，进入拥塞避免状态");
         }
+
         if(ack > base) {
-            wrongAckNum++;
-            if(wrongAckNum > 3) {
-                if(status == 0) {
-                    ssthresh = size / 2;
-                    size = ssthresh + 3;
-                    status = 2;
-                    tempAdd = 1;
-                    System.out.println("慢启动/拥塞避免状态执行快速重传，窗口大小已置为" + size + "，已进入快速恢复状态");
-                }
-                wrongAckNum = 0;
-                if(timers[base] != null) {
-                    timers[base].cancel();
-                    timers[base] = new UDT_Timer();
+            if(status == 2) {
+                size++;
+                System.out.println("快速恢复状态，一个重复的ACK到达");
+            } else {
+                wrongAckNum++;
+                if(wrongAckNum >= 3) {
+                    if(status == 0 || status == 1) {
+                        ssthresh = size / 2;
+                        size = ssthresh + 3;
+                        status = 2;
+                        System.out.println("慢启动/拥塞避免状态执行快速重传，窗口大小已置为" + size + "，已进入快速恢复状态");
+                    }
+                    wrongAckNum = 0;
+                    if(timers[base] != null) {
+                        timers[base].cancel();
+                        timers[base] = new UDT_Timer();
+                        try {
+                            Taho_RetransmitTask task = new Taho_RetransmitTask(client, packets[base].clone());
+                            timers[base].schedule(task, 3000, 3000);
+                        } catch (CloneNotSupportedException e) {
+                            e.printStackTrace();
+                        }
+                    }
                     try {
-                        Taho_RetransmitTask task = new Taho_RetransmitTask(client, packets[base].clone());
-                        timers[base].schedule(task, 3000, 3000);
+                        client.send(packets[base].clone());
                     } catch (CloneNotSupportedException e) {
                         e.printStackTrace();
                     }
                 }
-                try {
-                    client.send(packets[base].clone());
-                } catch (CloneNotSupportedException e) {
-                    e.printStackTrace();
-                }
             }
         }
         else if (ack >= base) {
-            System.out.print("size： " + size);
-            if (status == 0 && size < ssthresh) {
-                if(size * 2 <= 0) {
-                    //处理整型溢出现象
-                    size = Integer.MAX_VALUE/2;
-                } else {
-                    size = Math.min(Integer.MAX_VALUE/2, size * 2);
-                }
-                if(status == 0 && size >= ssthresh) {
-                    status = 1;
-                }
-            } else if(status == 0){
-                if(size + 1 <= 0) {
-                    //处理整型溢出现象
-                    size = Integer.MAX_VALUE/2;
-                } else {
-                    size = Math.min(Integer.MAX_VALUE/2, size + 1);
-                }
+            if(status == 2 && !isAck[ack]) {
+                //快速恢复状态，一个新的ACK到达
+                size = ssthresh;
+                status = 1;
+                count = 0;
+                System.out.println("快速恢复状态，一个新的ACK到达，进入拥塞避免状态");
             }
-            System.out.println(" --> " + size);
         }
         if(ack >= base) {
             int index = ack;
@@ -145,13 +135,21 @@ public class Reno_SendWindow extends SR_SendWindow{
                 end = base + size - 1;
             }
         }
-        if(flag) {
-            status = 0;
-        }
+        System.out.println("size : " + size);
         System.out.print("index = " + ack);
         System.out.print(" base = " + base);
         System.out.print(" nextseqnum = " + nextseqnum);
         System.out.println(" end = " + end);
+        File fw = new File("windowSize.txt");
+        BufferedWriter writer;
+        try {
+            writer = new BufferedWriter(new FileWriter(fw, true));
+            writer.write("ack = " + ack + "  size = " + size + "  ssthresh = " + ssthresh + "\n");
+            writer.flush();
+            writer.close();
+        } catch (IOException e) {
+
+        }
     }
 
     class Taho_RetransmitTask extends RetransmitTask {
@@ -178,13 +176,21 @@ public class Reno_SendWindow extends SR_SendWindow{
 //                timers[number].schedule(task, 3000, 3000);
 //                return;
 //            }
-            ssthresh = Math.max(size / 2, 1);
-            size = 1;
+
             if(status == 0) {
+                ssthresh = Math.max(size / 2, 1);
+                size = 1;
                 System.out.println("慢启动状态超时, size已置成1, ssthresh = " + ssthresh);
             } else if(status == 2) {
+                ssthresh = Math.max(size / 2, 1);
+                size = 1;
                 status = 0;
                 System.out.println("快速恢复状态超时, size已置成1, ssthresh = " + ssthresh);
+            } else if(status == 1) {
+                ssthresh = Math.max(size / 2, 1);
+                size = 1;
+                status = 0;
+                System.out.println("拥塞避免状态超时，size已置成1, ssthresh = " + ssthresh);
             }
             super.run();
             if(timers[number] != null) {
